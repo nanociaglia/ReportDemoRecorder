@@ -95,7 +95,7 @@ public void CallAdmin_OnReportPost(int client, int target, const char[] reason)
 	}
 	else
 	{
-		CPrintToChatAll("{green}[CallAdminDemo]{default} STV is {green}already recording");
+		CPrintToChatAll("{green}[ReportDemo]{default} STV is {green}already recording");
 	}
 }
 
@@ -117,7 +117,7 @@ public void SBPP_OnReportPlayer(int iReporter, int iTarget, const char[] sReason
 	}
 	else
 	{
-		CPrintToChatAll("{green}[CallAdminDemo]{default} STV is {green}already recording");
+		CPrintToChatAll("{green}[ReportDemo]{default} STV is {green}already recording");
 	}
 }
 
@@ -143,7 +143,7 @@ void StartRecordingDemo()
 	GetCurrentMap(sMap, sizeof(sMap));
 	ReplaceString(sMap, sizeof(sMap), "/", "-", false);	
 	
-	CPrintToChatAll("{green}[CallAdminDemo]{default} SourceTV started recording due a player's report");
+	CPrintToChatAll("{green}[ReportDemo]{default} SourceTV started recording due a player's report");
 
 	ServerCommand("tv_record \"%s/report_%s_%s\"", sPath, sTime, sMap);
 }
