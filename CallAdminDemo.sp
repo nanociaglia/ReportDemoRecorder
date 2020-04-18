@@ -76,7 +76,7 @@ void StartRecordingDemo()
 	
 	CPrintToChatAll("{green}[CallAdminDemo]{default} SourceTV started recording due a player's report");
 
-	ServerCommand("tv_record \"%s/aso_%s_%s\"", sPath, sTime, sMap);
+	ServerCommand("tv_record \"%s/report_%s_%s\"", sPath, sTime, sMap);
 }
 
 void StopRecordDemo()
@@ -84,7 +84,6 @@ void StopRecordDemo()
 	if(g_bIsTVRecording)
 	{
 		ServerCommand("tv_stoprecord");
-		g_bIsTVRecording = false;
 	}
 }
 
