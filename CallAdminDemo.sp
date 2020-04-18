@@ -84,6 +84,7 @@ void StopRecordDemo()
 	if(g_bIsTVRecording)
 	{
 		ServerCommand("tv_stoprecord");
+		g_bIsTVRecording = false;
 	}
 }
 
