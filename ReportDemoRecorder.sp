@@ -119,7 +119,11 @@ public void CallAdmin_OnReportPost(int client, int target, const char[] reason)
 	if(!g_bIsTVRecording)
 	{
 		StartRecordingDemo();
-		getReportedName = GetClientUserId(target);
+		
+		if(g_cvarRDRDemoName.IntValue == 2)
+		{
+			getReportedName = GetClientUserId(target);
+		}
 	}
 	else
 	{
@@ -137,7 +141,11 @@ public void SBPP_OnReportPlayer(int iReporter, int iTarget, const char[] sReason
 	if(!g_bIsTVRecording)
 	{
 		StartRecordingDemo();
-		getReportedName = GetClientUserId(iTarget);
+
+		if(g_cvarRDRDemoName.IntValue == 2)
+		{
+			getReportedName = GetClientUserId(iTarget);
+		}
 	}
 	else
 	{
