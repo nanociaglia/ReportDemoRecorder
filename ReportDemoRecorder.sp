@@ -11,7 +11,7 @@ bool g_bIsTVRecording = false;
 
 char g_szLogFile[PLATFORM_MAX_PATH];
 
-int getReportedName = -1;
+int g_iGetReportedName = -1;
 
 ConVar g_cvarRDREnable;
 ConVar g_cvarRDRPath;
@@ -26,7 +26,7 @@ public Plugin myinfo =
 	name = "Report Demo Recorder",
 	author = "Nano",
 	description = "Start recording a demo when someone is reported.",
-	version = "2.1",
+	version = "2.2",
 	url = "https://steamcommunity.com/id/nano2k06/"
 };
 
@@ -111,6 +111,11 @@ public void SourceTV_OnStopRecording(int iInstance, const char[] szFileName)
 
 public void CallAdmin_OnReportPost(int client, int target, const char[] reason)
 {
+	if(g_cvarRDRDemoName.IntValue == 2)
+	{
+		g_iGetReportedName = target;
+	}
+
 	if(!g_cvarRDREnable.BoolValue && g_cvarRDRSystem.IntValue == 2)
 	{
 		return;
@@ -119,11 +124,6 @@ public void CallAdmin_OnReportPost(int client, int target, const char[] reason)
 	if(!g_bIsTVRecording)
 	{
 		StartRecordingDemo();
-		
-		if(g_cvarRDRDemoName.IntValue == 2)
-		{
-			getReportedName = GetClientUserId(target);
-		}
 	}
 	else
 	{
@@ -133,6 +133,11 @@ public void CallAdmin_OnReportPost(int client, int target, const char[] reason)
 
 public void SBPP_OnReportPlayer(int iReporter, int iTarget, const char[] sReason)
 {
+	if(g_cvarRDRDemoName.IntValue == 2)
+	{
+		g_iGetReportedName = iTarget;
+	}
+
 	if(!g_cvarRDREnable.BoolValue && g_cvarRDRSystem.IntValue == 1)
 	{
 		return;
@@ -141,11 +146,6 @@ public void SBPP_OnReportPlayer(int iReporter, int iTarget, const char[] sReason
 	if(!g_bIsTVRecording)
 	{
 		StartRecordingDemo();
-
-		if(g_cvarRDRDemoName.IntValue == 2)
-		{
-			getReportedName = GetClientUserId(iTarget);
-		}
 	}
 	else
 	{
@@ -163,7 +163,7 @@ void StartRecordingDemo()
 	char sPath[PLATFORM_MAX_PATH];
 	char sTime[16];
 	char sMap[32];
-	char sName[32];
+	char sPlayerName[64];
 	
 	g_bIsTVRecording = true;
 	g_cvarRDRPath.GetString(sPath, sizeof(sPath));
@@ -178,8 +178,8 @@ void StartRecordingDemo()
 	}
 	else if(g_cvarRDRDemoName.IntValue == 2)
 	{
-		GetClientName(getReportedName, sName, 31);
-		ServerCommand("tv_record \"%s/report_%s_%s\"", sPath, sName, sMap);
+		GetClientName(g_iGetReportedName, sPlayerName, sizeof sPlayerName);
+		ServerCommand("tv_record \"%s/report_%s_%s\"", sPath, sPlayerName, sMap);
 	}
 	
 	CPrintToChatAll("{green}[ReportDemo]{default} SourceTV started recording due a player's report.");
@@ -196,7 +196,7 @@ void StopRecordDemo()
 	{
 		ServerCommand("tv_stoprecord");
 		g_bIsTVRecording = false;
-		getReportedName = -1;
+		g_iGetReportedName = -1;
 	}
 }
 
