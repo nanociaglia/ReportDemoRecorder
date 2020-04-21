@@ -82,7 +82,7 @@ public Action StartRecordCmd(int client, int args)
 {
 	if(g_cvarRDRDemoName.IntValue > 1)
 	{
-		CPrintToChat(client, "{green}[ReportDemo]{default} You can't not record a demo using CVar {green}sm_rdr_name '2 or 3'{default}.");
+		CPrintToChat(client, "{green}[ReportDemo]{default} You can't record a demo using CVar {green}sm_rdr_name '2 or 3'{default}.");
 		CPrintToChat(client, "{green}[ReportDemo]{default} Consider changing the {green}CVar value to 1.");
 		EmitSoundToClient(client, "buttons/button11.wav", SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 1.0);
 		return Plugin_Handled;
