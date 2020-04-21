@@ -10,6 +10,7 @@
 bool g_bIsTVRecording = false;
 
 char g_szLogFile[PLATFORM_MAX_PATH];
+char g_szAuth[MAXPLAYERS + 1][32];
 
 int g_iGetReportedName = -1;
 
@@ -17,6 +18,7 @@ ConVar g_cvarRDREnable;
 ConVar g_cvarRDRPath;
 ConVar g_cvarRDRSystem;
 ConVar g_cvarRDRDemoName;
+ConVar g_cvarRDRStopRecordTime;
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -26,7 +28,7 @@ public Plugin myinfo =
 	name = "Report Demo Recorder",
 	author = "Nano",
 	description = "Start recording a demo when someone is reported.",
-	version = "2.2",
+	version = "2.5",
 	url = "https://steamcommunity.com/id/nano2k06/"
 };
 
@@ -35,11 +37,13 @@ public void OnPluginStart()
 	g_cvarRDREnable = CreateConVar("sm_rdr_enable", "1", "Enable or disable the whole plugin (1 enabled | 0 disabled) - Default = 1");
 	g_cvarRDRPath = CreateConVar("sm_rdr_path", ".", "Path to store recorded demos by CallAdmin (let . to upload demos to the cstrike/csgo folder)");
 	g_cvarRDRSystem = CreateConVar("sm_rdr_system", "1", "Change the system to start recording demos (1 = CallAdmin | 2 = Sourceban Reports) - Default = 1");
-	g_cvarRDRDemoName = CreateConVar("sm_rdr_name", "1", "Change the name of the demo when it's uploaded to the FTP (1 = Date & Hour | 2 = Name of reported) - Default = 1");
+	g_cvarRDRDemoName = CreateConVar("sm_rdr_name", "1", "Change the name of the demo when it's uploaded to the FTP (1 = Date & Hour | 2 = Name of reported | 3 = SteamID64 of reported) - Default = 1");
+	g_cvarRDRStopRecordTime = CreateConVar("sm_rdr_recordtime", "0", "Time in seconds to stop recording automatically (0 = Disable [default])");
 	
 	AutoExecConfig(true, "ReportDemoRecorder");
 
 	RegAdminCmd("sm_stoprecord", StopRecordCmd, ADMFLAG_BAN);
+	RegAdminCmd("sm_record", StartRecordCmd, ADMFLAG_GENERIC);
 	
 	char sPath[PLATFORM_MAX_PATH];
 	g_cvarRDRPath.GetString(sPath, sizeof(sPath));
@@ -69,6 +73,29 @@ public Action StopRecordCmd(int client, int args)
 	else
 	{
 		CPrintToChat(client, "{green}[ReportDemo]{default} STV it's not recording {green}at this moment.");
+		EmitSoundToClient(client, "buttons/button11.wav", SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 1.0);
+	}
+	return Plugin_Handled;
+}
+
+public Action StartRecordCmd(int client, int args)
+{
+	if(g_cvarRDRDemoName.IntValue > 1)
+	{
+		CPrintToChat(client, "{green}[ReportDemo]{default} You can't not record a demo using CVar {green}sm_rdr_name '2 or 3'{default}.");
+		CPrintToChat(client, "{green}[ReportDemo]{default} Consider changing the {green}CVar value to 1.");
+		EmitSoundToClient(client, "buttons/button11.wav", SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 1.0);
+		return Plugin_Handled;
+	}
+
+	if(!g_bIsTVRecording)
+	{
+		CPrintToChat(client, "{green}[ReportDemo]{default} STV is now {darkred}recording a demo file.");
+		StartRecordingDemo();
+	}
+	else
+	{
+		CPrintToChat(client, "{green}[ReportDemo]{default} STV is already recording {green}a demo.");
 		EmitSoundToClient(client, "buttons/button11.wav", SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 1.0);
 	}
 	return Plugin_Handled;
@@ -111,7 +138,7 @@ public void SourceTV_OnStopRecording(int iInstance, const char[] szFileName)
 
 public void CallAdmin_OnReportPost(int client, int target, const char[] reason)
 {
-	if(g_cvarRDRDemoName.IntValue == 2)
+	if(g_cvarRDRDemoName.IntValue >= 2)
 	{
 		g_iGetReportedName = target;
 	}
@@ -133,7 +160,7 @@ public void CallAdmin_OnReportPost(int client, int target, const char[] reason)
 
 public void SBPP_OnReportPlayer(int iReporter, int iTarget, const char[] sReason)
 {
-	if(g_cvarRDRDemoName.IntValue == 2)
+	if(g_cvarRDRDemoName.IntValue >= 2)
 	{
 		g_iGetReportedName = iTarget;
 	}
@@ -159,6 +186,11 @@ void StartRecordingDemo()
 	{
 		return;
 	}
+	
+	if(g_cvarRDRStopRecordTime.IntValue >= 1)
+	{
+		CreateTimer(g_cvarRDRStopRecordTime.FloatValue, Timer_Stoprecord);
+	}
 
 	char sPath[PLATFORM_MAX_PATH];
 	char sTime[16];
@@ -181,6 +213,11 @@ void StartRecordingDemo()
 		GetClientName(g_iGetReportedName, sPlayerName, sizeof sPlayerName);
 		ServerCommand("tv_record \"%s/report_%s_%s\"", sPath, sPlayerName, sMap);
 	}
+	else if(g_cvarRDRDemoName.IntValue == 3)
+	{
+		GetClientAuthId(g_iGetReportedName, AuthId_SteamID64, g_szAuth[g_iGetReportedName], sizeof(g_szAuth));
+		ServerCommand("tv_record \"%s/report_%s_%s\"", sPath, g_szAuth[g_iGetReportedName], sMap);
+	}
 	
 	CPrintToChatAll("{green}[ReportDemo]{default} SourceTV started recording due a player's report.");
 }
@@ -198,6 +235,14 @@ void StopRecordDemo()
 		g_bIsTVRecording = false;
 		g_iGetReportedName = -1;
 	}
+}
+
+public Action Timer_Stoprecord(Handle timer)
+{
+	int time = g_cvarRDRStopRecordTime.IntValue;
+
+	StopRecordDemo();
+	CPrintToChatAll("{green}[ReportDemo]{default} Stopped recording demo automatically after {darkred}%d seconds.", time);
 }
 
 void InitDirectory(const char[] sDir)
