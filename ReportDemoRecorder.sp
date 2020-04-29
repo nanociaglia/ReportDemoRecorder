@@ -3,9 +3,9 @@
 #include <multicolors>
 
 #undef REQUIRE_PLUGIN
+#tryinclude <sourcetvmanager>
 #include <sourcebanspp>
 #include <calladmin>
-#include <sourcetvmanager>
 
 bool g_bIsTVRecording = false;
 
@@ -18,6 +18,8 @@ ConVar g_cRDRPath;
 ConVar g_cRDRSystem;
 ConVar g_cRDRDemoName;
 ConVar g_cRDRStopRecordTime;
+ConVar g_cRDRStopPrintMsg;
+ConVar g_cRDRStopSourceTVManager;
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -38,6 +40,8 @@ public void OnPluginStart()
 	g_cRDRSystem = CreateConVar("sm_rdr_system", "1", "Change the system to start recording demos (1 = CallAdmin | 2 = Sourceban Reports) - Default = 1");
 	g_cRDRDemoName = CreateConVar("sm_rdr_name", "1", "Change the name of the demo when it's uploaded to the FTP (1 = Date & Hour | 2 = Name of reported | 3 = SteamID64 of reported) - Default = 1");
 	g_cRDRStopRecordTime = CreateConVar("sm_rdr_recordtime", "0", "Time in seconds to stop recording automatically (0 = Disable [default])");
+	g_cRDRStopPrintMsg = CreateConVar("sm_rdr_publicmsg", "1", "Print messages when STV start/stop recording? (0 = Disabled | 1 = Enabled [default])");
+	g_cRDRStopSourceTVManager = CreateConVar("sm_rdr_sourcetvmanager", "1", "Enable or disable SourceTVManager? (0 Disabled | 1 = Enabled [default])");
 	
 	AutoExecConfig(true, "ReportDemoRecorder");
 
@@ -117,7 +121,7 @@ public void OnConVarChanged(ConVar convar, const char[] oldValue, const char [] 
 
 public void SourceTV_OnStartRecording(int iInstance, const char[] szFileName) 
 {
-	if(!g_cRDREnable.BoolValue)
+	if(!g_cRDREnable.BoolValue && !g_cRDRStopSourceTVManager.BoolValue)
 	{
 		return;
 	}
@@ -127,7 +131,7 @@ public void SourceTV_OnStartRecording(int iInstance, const char[] szFileName)
 
 public void SourceTV_OnStopRecording(int iInstance, const char[] szFileName)
 {
-	if(!g_cRDREnable.BoolValue)
+	if(!g_cRDREnable.BoolValue && !g_cRDRStopSourceTVManager.BoolValue)
 	{
 		return;
 	}
@@ -153,7 +157,10 @@ public void CallAdmin_OnReportPost(int client, int target, const char[] reason)
 	}
 	else
 	{
-		CPrintToChatAll("{green}[ReportDemo]{default} STV is {darkred}already recording a demo.");
+		if(!g_cRDRStopPrintMsg.BoolValue)
+		{
+			CPrintToChatAll("{green}[ReportDemo]{default} STV is {darkred}already recording a demo.");
+		}
 	}
 }
 
@@ -175,7 +182,10 @@ public void SBPP_OnReportPlayer(int iReporter, int iTarget, const char[] sReason
 	}
 	else
 	{
-		CPrintToChatAll("{green}[ReportDemo]{default} STV is {darkred}already recording a demo.");
+		if(!g_cRDRStopPrintMsg.BoolValue)
+		{
+			CPrintToChatAll("{green}[ReportDemo]{default} STV is {darkred}already recording a demo.");
+		}
 	}
 }
 
@@ -218,8 +228,11 @@ void StartRecordingDemo()
 		GetClientAuthId(g_iGetReportedName, AuthId_SteamID64, sAuth[g_iGetReportedName], sizeof(sAuth));
 		ServerCommand("tv_record \"%s/report_%s_%s\"", sPath, sAuth[g_iGetReportedName], sMap);
 	}
-	
-	CPrintToChatAll("{green}[ReportDemo]{default} SourceTV started recording due a player's report.");
+
+	if(!g_cRDRStopPrintMsg.BoolValue)
+	{
+		CPrintToChatAll("{green}[ReportDemo]{default} SourceTV started recording due a player's report.");
+	}
 }
 
 void StopRecordDemo()
@@ -242,7 +255,11 @@ public Action Timer_Stoprecord(Handle timer)
 	int time = g_cRDRStopRecordTime.IntValue;
 
 	StopRecordDemo();
-	CPrintToChatAll("{green}[ReportDemo]{default} Stopped recording demo automatically after {darkred}%d seconds.", time);
+	
+	if(!g_cRDRStopPrintMsg.BoolValue)
+	{
+		CPrintToChatAll("{green}[ReportDemo]{default} Stopped recording demo automatically after {darkred}%d seconds.", time);
+	}
 }
 
 void InitDirectory(const char[] sDir)
