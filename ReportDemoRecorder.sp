@@ -3,9 +3,10 @@
 #include <multicolors>
 
 #undef REQUIRE_PLUGIN
-#tryinclude <sourcetvmanager>
 #include <sourcebanspp>
 #include <calladmin>
+#undef REQUIRE_EXTENSIONS
+#include <sourcetvmanager>
 
 bool g_bIsTVRecording = false;
 
