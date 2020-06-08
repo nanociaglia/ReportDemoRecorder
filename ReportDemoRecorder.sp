@@ -158,7 +158,7 @@ public void CallAdmin_OnReportPost(int client, int target, const char[] reason)
 	}
 	else
 	{
-		if(!g_cRDRStopPrintMsg.BoolValue)
+		if(g_cRDRStopPrintMsg.BoolValue)
 		{
 			CPrintToChatAll("{green}[ReportDemo]{default} STV is {darkred}already recording a demo.");
 		}
@@ -183,7 +183,7 @@ public void SBPP_OnReportPlayer(int iReporter, int iTarget, const char[] sReason
 	}
 	else
 	{
-		if(!g_cRDRStopPrintMsg.BoolValue)
+		if(g_cRDRStopPrintMsg.BoolValue)
 		{
 			CPrintToChatAll("{green}[ReportDemo]{default} STV is {darkred}already recording a demo.");
 		}
@@ -230,7 +230,7 @@ void StartRecordingDemo()
 		ServerCommand("tv_record \"%s/report_%s_%s\"", sPath, sAuth[g_iGetReportedName], sMap);
 	}
 
-	if(!g_cRDRStopPrintMsg.BoolValue)
+	if(g_cRDRStopPrintMsg.BoolValue)
 	{
 		CPrintToChatAll("{green}[ReportDemo]{default} SourceTV started recording due a player's report.");
 	}
@@ -257,7 +257,7 @@ public Action Timer_Stoprecord(Handle timer)
 
 	StopRecordDemo();
 	
-	if(!g_cRDRStopPrintMsg.BoolValue)
+	if(g_cRDRStopPrintMsg.BoolValue)
 	{
 		CPrintToChatAll("{green}[ReportDemo]{default} Stopped recording demo automatically after {darkred}%d seconds.", time);
 	}
